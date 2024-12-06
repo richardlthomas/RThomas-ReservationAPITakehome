@@ -1,8 +1,11 @@
 import os
 import uuid
 
-from datetime import datetime
+import uvicorn
+
+from datetime import datetime, timedelta
 from typing import Annotated, Sequence
+from uuid import UUID
 
 from models.Appointment import Appointment
 from models.Availability import Availability
@@ -24,6 +27,8 @@ DB_NAME = os.getenv('DB_NAME')
 db_uri = f'postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=require'
 connect_args = {}
 engine = create_engine(db_uri, connect_args=connect_args)
+
+APPOINTMENT_LENGTH = int(os.getenv('APPOINTMENT_LENGTH_IN_MINUTES'))
 
 
 def create_db_and_tables():
@@ -76,9 +81,18 @@ async def get_provider(provider_id: uuid.UUID, session: SessionDep) -> Provider:
 
 
 @app.get('/providers/{provider_id}/availability/')
-async def get_provider_availability(provider_id: uuid.UUID, session: SessionDep) -> Sequence[Availability]:
+async def get_provider_availability(provider_id: uuid.UUID, session: SessionDep) -> list[datetime]:
     provider_availability = session.exec(select(Availability).where(Availability.provider_id == provider_id)).all()
-    return provider_availability
+    available_appointments = []
+    for available_window in provider_availability:
+        start = available_window.start_time
+        end = available_window.end_time
+        delta = timedelta(minutes=APPOINTMENT_LENGTH)
+        current = start
+        while current < end:
+            available_appointments.append(current)
+            current += delta
+    return available_appointments
 
 
 @app.post('/providers/{provider_id}/availability/')
@@ -125,3 +139,32 @@ async def get_client(client_id: uuid.UUID, session: SessionDep) -> Client:
     if not client:
         raise HTTPException(status_code=404, detail='Client not found')
     return client
+
+
+@app.post('/appointments/reserve')
+async def reserve_appointment(
+        client_id: Annotated[UUID, Body()],
+        provider_id: Annotated[UUID, Body()],
+        appointment_time: Annotated[datetime, Body()],
+        session: SessionDep) -> Appointment:
+    time = appointment_time
+    client = await get_client(client_id, session)
+    provider = await get_provider(provider_id, session)
+    available_appointments = await get_provider_availability(provider_id, session)
+    appointment = Appointment(client=client,
+                              client_id=client_id,
+                              provider=provider,
+                              provider_id=provider_id,
+                              appointment_time=appointment_time)
+    db_appointment = Appointment.model_validate(appointment)
+    if time not in available_appointments:
+        raise HTTPException(status_code=400, detail='Time requested is not available, please see provider availability')
+    else:
+        session.add(db_appointment)
+        session.commit()
+        session.refresh(db_appointment)
+        return db_appointment
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
