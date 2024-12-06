@@ -40,6 +40,8 @@ As far as I can tell from my testing, the API does meet all the stated requireme
 
 I was instructed to spend no more than ~3 hours on this - I did end up spending a bit more (probably closer to 6 hours total), but that was largely due to troubleshooting issues I had working with the ORM and handling some of the relationships between the data. That aside, the actual work on implementing the API took probably close to 2-3 hours, if I had to estimate.
 
+The directory structure for this repository is a bit convoluted (all of the code in /python3_12/ReservationAPI instead of just in the root directory), as I had originally hoped to do this Python implementation and then attempt a C#/.NET implementation and partition them into separate directories, but I ran out of time.
+
 ## Trade-offs
 
 If I had more time/was writing this to be used in an actual production environment, I would definitely focus more on authentication/security to ensure that clients and providers can only access/modify their own data.
