@@ -34,9 +34,11 @@ For API documentation:
 - For Swagger/OpenAPI docs, go to http://127.0.0.1:8000/docs
 - For alternative docs by ReDoc, go to http://127.0.0.1:8000/redoc
 
-## Assumptions
+## Assumptions/Experiences
 
 As far as I can tell from my testing, the API does meet all the stated requirements. For data persistence, I leveraged a hosted database. The API has absolutely no authentication, and any user can add clients/providers, set availability for any provider, and reserve/confirm appointments for any client/provider. The requirments did not state anything about this, but it would probably be a consideration if this was to be used in a production environment.
+
+I was instructed to spend no more than ~3 hours on this - I did end up spending a bit more (probably closer to 6 hours total), but that was largely due to troubleshooting issues I had working with the ORM and handling some of the relationships between the data. That aside, the actual work on implementing the API took probably close to 2-3 hours, if I had to estimate.
 
 ## Trade-offs
 
@@ -48,4 +50,4 @@ In a production environment, I would use a proper production-ready application s
 
 In terms of requirements/features, I would have liked to make the appointment/availability handling a bit more robust, like automatically cleaning up unconfirmed appointments after 30 minutes, and added update/delete endpoints to modify clients, providers, and appointments after being created. I would probably also like to make data entry/querying a bit more robust, particularly around datetime handling and being able to query clients/providers by name or appointments/availability by day. I also probably would have added more validation to guarantee that availability works out with the 15 minute intervals outlined in the requirements (e.g. if a provider sets their availability from 9:34am to 5:00pm instead of something round like 9:00-5:00).
 
-Another thing I did not get around to implementing was enforcing uniqueness/idempotency, particularly around provider availability (e.g. a provider can submit the same availability multiple times, and duplicates will appear when you view their availability - however, if an appointment is made and confirmed for one of the duplicate times, all instances are removed from the availability)
+Another thing I did not get around to implementing was enforcing uniqueness/idempotency, particularly around provider availability. For example, a provider can submit the same availability multiple times, and duplicates will appear when you view their availability; however, if an appointment is made and confirmed for one of the duplicate times, all instances are removed from the availability.
