@@ -7,4 +7,4 @@ COPY ./alembic.ini /code/alembic.ini
 COPY ./models /code/models
 COPY ./app /code/app
 CMD ["alembic", "upgrade", "head"]
-CMD ["fastapi", "run", "app/main.py", "--port", "80"]
+CMD ["fastapi", "run", "app/main.py", "--port", "8080"]
